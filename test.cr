@@ -1,23 +1,54 @@
 require "socket"
 require "./src/bitcoin"
 
-initial_ips = `nslookup seed.bitcoin.sipa.be`.scan(/Address\: (.+)/).map(&.[1])
-initial_ip = initial_ips.sample
 
-puts "attempting connection to #{initial_ip}"
-socket = TCPSocket.new initial_ip, 8333
+module Bitcoin
+  def self.random_seed
+    puts "Looking up DNS seeds"
+    ips = `nslookup seed.bitcoin.sipa.be`.scan(/Address\: (.+)/).map(&.[1])
+    ips.sample
+  end
+
+  def self.connection
+    @@connection ||= TCPSocket.new(random_seed, 8333)
+  end
+end
 
 puts "connected, sending version message"
 
-version_message = Bitcoin::Protocol.version_message(initial_ip, 8333, 0)
-socket.send version_message
+ip_address = Bitcoin.connection.remote_address
+version_message = Bitcoin::Protocol.version_message(ip_address.address, ip_address.port, 0)
+send version_message
 
-puts "reading message..."
-puts read_message(socket)
+read # version
+read # verack
 
-def read_message(socket)
+send Bitcoin::Protocol.message("getaddr", IO::Memory.new)
+
+loop do
+  read
+
+  sleep 1
+end
+
+def send(bytes)
+  puts "Sending:"
+  puts bytes.hexdump
+
+  Bitcoin.connection.send(bytes)
+end
+
+def read
+  puts "reading..."
+
+  socket = Bitcoin.connection
+
+  if socket.closed?
+    raise "already closed!"
+  end
+
   magic = socket.read_bytes(UInt32)
-  command = socket.read_string(12)
+  command = socket.read_string(12).strip("\u{0}")
   size = socket.read_bytes(UInt32)
   checksum = Bytes.new(4)
   socket.read(checksum)
@@ -29,6 +60,19 @@ def read_message(socket)
 
   if calculated_checksum == checksum
     puts "Successfully received '#{command}' message"
+    payload_io = IO::Memory.new(payload, false)
+
+    if command == "version"
+      version_message = Bitcoin::Messages::Version.from_payload payload_io
+      puts version_message.inspect
+
+      send Bitcoin::Protocol.message("verack", IO::Memory.new)
+    elsif command == "ping"
+      ping = Bitcoin::Messages::Ping.from_payload payload_io
+      pong = Bitcoin::Messages::Pong.new(nonce: ping.nonce)
+
+      send Bitcoin::Protocol.message("pong", pong.to_payload)
+    end
   else
     puts "WARNING: Checksum mismatch, skipping message"
   end
