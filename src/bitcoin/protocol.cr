@@ -3,8 +3,8 @@ require "openssl"
 module Bitcoin::Protocol
   MAINNET_MAGIC = 0xD9B4BEF9.to_u32
   VERSION = 70015_i32
-  SERVICES = 1_u64
-  USER_AGENT = "/Satoshi:0.15.0/"
+  SERVICES = 0_u64
+  USER_AGENT = "/Bitcoin-Crystal:0.0.1/"
   NONCE = rand 0xffffffffffffffff # aka node id
 
   def self.message(command : String, payload : IO) : Bytes
@@ -81,5 +81,22 @@ module Bitcoin::Protocol
     else
       raise "Invalid var int"
     end.to_u64
+  end
+
+  def write_var_int(io, size)
+    if size < 0xFD
+      io.write_byte(size.to_u8)
+    elsif size <= 0xFFFF
+      io.write_byte(0xFD)
+      io.write_bytes(size.to_u16)
+    elsif size <= 0xFFFFFF
+      io.write_byte(0xFE)
+      io.write_bytes(size.to_u32)
+    elsif size <= 0xFFFFFFFF
+      io.write_byte(0xFF)
+      io.write_bytes(size.to_u64)
+    else
+      raise "Invalid size: #{size}"
+    end
   end
 end

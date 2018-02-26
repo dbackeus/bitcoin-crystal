@@ -1,3 +1,3 @@
-require "./bitcoin/protocol"
+require "./bitcoin/*"
 
 require "./bitcoin/messages/*"
