@@ -72,6 +72,9 @@ def read
       pong = Bitcoin::Messages::Pong.new(nonce: ping.nonce)
 
       send Bitcoin::Protocol.message("pong", pong.to_payload)
+    elsif command == "addr"
+      addr = Bitcoin::Messages::Addr.from_payload payload_io
+      puts addr.inspect
     end
   else
     puts "WARNING: Checksum mismatch, skipping message"

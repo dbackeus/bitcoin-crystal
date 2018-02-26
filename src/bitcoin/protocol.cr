@@ -17,19 +17,12 @@ module Bitcoin::Protocol
 
     message.write_bytes(payload.size.to_u32)
 
-    payload_bytes = Bytes.new(payload.size)
-    payload.rewind
-    payload.read(payload_bytes)
+    payload_bytes = payload.to_slice
 
     message.write(checksum(payload_bytes))
-
     message.write(payload_bytes)
 
-    message_bytes = Bytes.new(message.size)
-    message.rewind
-    message.read(message_bytes)
-
-    message_bytes
+    message.to_slice
   end
 
   def self.version_message(to_ip, to_port, last_block)
@@ -83,17 +76,17 @@ module Bitcoin::Protocol
     end.to_u64
   end
 
-  def write_var_int(io, size)
+  def self.write_var_int(io, size)
     if size < 0xFD
       io.write_byte(size.to_u8)
     elsif size <= 0xFFFF
-      io.write_byte(0xFD)
+      io.write_byte(0xFD.to_u8)
       io.write_bytes(size.to_u16)
     elsif size <= 0xFFFFFF
-      io.write_byte(0xFE)
+      io.write_byte(0xFE.to_u8)
       io.write_bytes(size.to_u32)
     elsif size <= 0xFFFFFFFF
-      io.write_byte(0xFF)
+      io.write_byte(0xFF.to_u8)
       io.write_bytes(size.to_u64)
     else
       raise "Invalid size: #{size}"
