@@ -1,7 +1,6 @@
 require "socket"
 require "./src/bitcoin"
 
-
 module Bitcoin
   def self.random_seed
     puts "Looking up DNS seeds"
@@ -43,6 +42,10 @@ def read
 
   socket = Bitcoin.connection
 
+  while socket.peek.size < 24
+    sleep 0.1
+  end
+
   if socket.closed?
     raise "already closed!"
   end
@@ -53,13 +56,19 @@ def read
   checksum = Bytes.new(4)
   socket.read(checksum)
 
+  while socket.peek.size < size
+    sleep 0.1
+  end
+
   payload = Bytes.new(size)
   socket.read(payload)
 
   calculated_checksum = Bitcoin::Protocol.checksum(payload)
 
   if calculated_checksum == checksum
-    puts "Successfully received '#{command}' message"
+    puts "Successfully received '#{command}' message:"
+    puts payload.hexdump
+
     payload_io = IO::Memory.new(payload, false)
 
     if command == "version"
