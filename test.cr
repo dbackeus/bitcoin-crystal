@@ -16,13 +16,13 @@ end
 puts "connected, sending version message"
 
 ip_address = Bitcoin.connection.remote_address
-version_message = Bitcoin::Protocol.version_message(ip_address.address, ip_address.port, 0)
-send version_message
+
+send Bitcoin::Messages::Version.new
 
 read # version
 read # verack
 
-send Bitcoin::Protocol.message("getaddr", IO::Memory.new)
+# send Bitcoin::Protocol.message("getaddr", IO::Memory.new)
 
 loop do
   read
@@ -30,7 +30,9 @@ loop do
   sleep 1
 end
 
-def send(bytes)
+def send(message : Bitcoin::Message)
+  bytes = message.to_bytes
+
   puts "Sending:"
   puts bytes.hexdump
 
@@ -44,10 +46,6 @@ def read
 
   while socket.peek.size < 24
     sleep 0.1
-  end
-
-  if socket.closed?
-    raise "already closed!"
   end
 
   magic = socket.read_bytes(UInt32)
@@ -67,7 +65,7 @@ def read
 
   if calculated_checksum == checksum
     puts "Successfully received '#{command}' message:"
-    puts payload.hexdump
+    # puts payload.hexdump
 
     payload_io = IO::Memory.new(payload, false)
 
@@ -75,15 +73,18 @@ def read
       version_message = Bitcoin::Messages::Version.from_payload payload_io
       puts version_message.inspect
 
-      send Bitcoin::Protocol.message("verack", IO::Memory.new)
+      send Bitcoin::Messages::Verack.new
     elsif command == "ping"
       ping = Bitcoin::Messages::Ping.from_payload payload_io
-      pong = Bitcoin::Messages::Pong.new(nonce: ping.nonce)
-
-      send Bitcoin::Protocol.message("pong", pong.to_payload)
+      send Bitcoin::Messages::Pong.new(nonce: ping.nonce)
     elsif command == "addr"
       addr = Bitcoin::Messages::Addr.from_payload payload_io
       puts addr.inspect
+    elsif command == "inv"
+      inv = Bitcoin::Messages::Inv.from_payload payload_io
+      inv.inventory.each do |inventory|
+        puts inventory.inspect
+      end
     end
   else
     puts "WARNING: Checksum mismatch, skipping message"

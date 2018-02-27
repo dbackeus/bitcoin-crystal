@@ -10,7 +10,7 @@ module Bitcoin::Messages
     ]
 
     def inspect
-      "Bitcoin::Messages::Addr[#{addr_list.map(&.address).join(", ")}]"
+      "#{self.class.name}[#{addr_list.map(&.address).join(", ")}]"
     end
   end
 end

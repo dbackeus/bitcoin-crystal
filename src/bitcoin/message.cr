@@ -1,5 +1,25 @@
 module Bitcoin
   abstract class Message
+    def command
+      self.class.name.split("::").last.downcase
+    end
+
+    def to_bytes : Bytes
+      payload_bytes = payload.to_slice
+
+      IO::Memory.new.tap do |io|
+        io.write_bytes(Protocol::MAINNET_MAGIC)
+        io.write(Bytes.new(command.to_unsafe, 12))
+        io.write_bytes(payload_bytes.size.to_u32)
+        io.write(Protocol.checksum(payload_bytes))
+        io.write(payload_bytes)
+      end.to_slice
+    end
+
+    def payload : IO
+      IO::Memory.new
+    end
+
     macro payload(schema)
       {% begin %}
         {% for hash in schema %}
@@ -45,13 +65,13 @@ module Bitcoin
           )
         end
 
-        def to_payload : IO
+        def payload : IO
           IO::Memory.new.tap do |io|
             {% for hash in schema %}
               {% if hash[:type].class_name == "Generic" && hash[:type].name.stringify == "Array" %}
                 Bitcoin::Protocol.write_var_int(io, {{hash[:name].id}}.size)
                 {{hash[:name].id}}.each do |structure|
-                  io.write(structure.to_bytes)
+                  io.write(structure.payload.to_slice)
                 end
               {% elsif hash[:type].resolve == Bytes %}
                 io.write({{hash[:name].id}})
@@ -59,7 +79,7 @@ module Bitcoin
                 {% if hash[:size] == :var_int %}
                   Bitcoin::Protocol.write_var_int(io, {{hash[:name].id}}.size)
                 {% end %}
-                io.write(@user_agent.to_slice)
+                io.write({{hash[:name].id}}.to_slice)
               {% else %}
                 io.write_bytes({{hash[:name].id}})
               {% end %}

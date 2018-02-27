@@ -8,10 +8,10 @@ module Bitcoin::Messages
       addr.addr_list.first.address.should eq "10.0.0.1"
     end
 
-    it "to_payload's correctly" do
+    it "payload's correctly" do
       hexstring = hexstring("addr")
       addr = Addr.from_payload(IO::Memory.new(hexstring.hexbytes))
-      addr.to_payload.to_slice.hexstring.upcase.should eq hexstring
+      addr.payload.to_slice.hexstring.upcase.should eq hexstring
     end
   end
 end
