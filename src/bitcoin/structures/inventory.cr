@@ -1,5 +1,5 @@
 module Bitcoin::Structures
-  class Inventory < Message
+  class Inventory < Structure
     # TODO: How to handle type as an enum?
 
     payload [

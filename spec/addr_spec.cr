@@ -11,7 +11,7 @@ module Bitcoin::Messages
     it "payload's correctly" do
       hexstring = hexstring("addr")
       addr = Addr.from_payload(IO::Memory.new(hexstring.hexbytes))
-      addr.payload.to_slice.hexstring.upcase.should eq hexstring
+      addr.to_payload.to_slice.hexstring.upcase.should eq hexstring
     end
   end
 end

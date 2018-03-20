@@ -10,7 +10,7 @@ module Bitcoin::Messages
     it "payload's correctly" do
       hexstring = hexstring("version")
       version = Version.from_payload(IO::Memory.new(hexstring.hexbytes))
-      version.payload.to_slice.hexstring.upcase.should eq hexstring
+      version.to_payload.to_slice.hexstring.upcase.should eq hexstring
     end
 
     describe "#command" do

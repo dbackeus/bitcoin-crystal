@@ -10,7 +10,7 @@ module Bitcoin::Messages
     it "payload's correctly" do
       hexstring = hexstring("inv")
       inv = Inv.from_payload(IO::Memory.new(hexstring.hexbytes))
-      inv.payload.to_slice.hexstring.upcase.should eq hexstring
+      inv.to_payload.to_slice.hexstring.upcase.should eq hexstring
     end
   end
 end

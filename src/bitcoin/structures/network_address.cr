@@ -1,5 +1,5 @@
 module Bitcoin::Structures
-  class NetworkAddress < Message
+  class NetworkAddress < Structure
     payload [
       { name: :time, type: UInt32, default: Time.now.epoch.to_u32 },
       { name: :services, type: UInt64, default: Bitcoin::Protocol::SERVICES },
