@@ -15,8 +15,12 @@ module Bitcoin::Structures
       4 => "MSG_CMPCT_BLOCK",
     }
 
+    def readable_hash
+      hash.clone.reverse!.hexstring
+    end
+
     def inspect
-      "#{self.class.name}[#{TYPES[type]}]"
+      "#{self.class.name}[#{TYPES[type]}: {#{readable_hash}}]"
     end
   end
 end

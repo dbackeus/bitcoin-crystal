@@ -1,3 +1,6 @@
+require "dotenv"
+Dotenv.load
+
 require "spec"
 require "../src/bitcoin"
 

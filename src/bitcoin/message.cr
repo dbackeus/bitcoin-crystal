@@ -8,7 +8,7 @@ module Bitcoin
       payload_bytes = to_payload.to_slice
 
       IO::Memory.new.tap do |io|
-        io.write_bytes(Protocol::MAINNET_MAGIC)
+        io.write_bytes(Protocol.magic)
         io.write(Bytes.new(command.to_unsafe, 12))
         io.write_bytes(payload_bytes.size.to_u32)
         io.write(Protocol.checksum(payload_bytes))
@@ -16,6 +16,7 @@ module Bitcoin
       end.to_slice
     end
 
+    # overloaded by payload macro
     def to_payload : IO
       IO::Memory.new
     end

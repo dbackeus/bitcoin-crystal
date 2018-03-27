@@ -61,6 +61,9 @@ module Bitcoin
                   io.write(structure.to_payload.to_slice)
                 end
               {% elsif hash[:type].resolve == Bytes %}
+                {% if hash[:size] == :var_int %}
+                  Bitcoin::Protocol.write_var_int(io, {{hash[:name].id}}.size)
+                {% end %}
                 io.write({{hash[:name].id}})
               {% elsif hash[:type].resolve == String %}
                 {% if hash[:size] == :var_int %}
