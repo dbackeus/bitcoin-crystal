@@ -1,3 +1,5 @@
+require "./secp256k1"
+
 require "./bitcoin/protocol"
 require "./bitcoin/structure"
 require "./bitcoin/message"
