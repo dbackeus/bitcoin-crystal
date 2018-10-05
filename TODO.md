@@ -1,0 +1,2 @@
+- Read hashes in "internal byte order" (big endian?)
+- Avoid duplicating block headers structure in various places
